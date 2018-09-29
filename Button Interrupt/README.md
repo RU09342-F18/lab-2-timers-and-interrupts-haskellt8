@@ -1,30 +1,24 @@
 # Button Interrupt
-Last lab you were introduced to the idea of "Polling" where in you would constantly check the status of the P1IN register to see if something has changed. While your code may have worked, it ends up spending a ton of time just checking something that has not changed. What we can do instead is use another two registers available to us from the GPIO peripheral, P1IE and P1IES, to allow our processor to just chill out and wait until something happens to act upon it. Without spending too much space on this README with explanations, what makes these interrupts tick is the following code:
+It is energy inefficient to use a for loop to delay time on a microprocessor.  Rather, it is better to use interrupts.  When the processor is in low power mode with interrupts enabled, it is able to wake up at the interrupt trigger, and execute code, then go back to low power mode.  In addition, it also makes it easier to stop where you are in your code, execute another function, and then return.  This can be done at the push of a button.  The other option is to constantly check to see if the button is pressed or not. Interrupt is more reliable, saves more power, and is faster than the alternative.
 
 ```c
 #pragma vector=PORT1_VECTOR
-__interrupt void Port_1(void)
+__interrupt void PORT_1(void)
 {
+    P1OUT ^= LED1;
+    while (1) // debouncing
+    {
+        if((P1IN & BTN1) != 0) // if the button is released
+        {
+            __delay_cycles(1000);
+            if((P1IN & BTN1) != 0) // if the button is still released
+            {
+                P1IFG &= ~(BTN1); // reset interrupt flag
+                break;
+            }
+        }
+    } // break after button release
 }
 ```
 
-While you still need to initialize the Ports to be interrupt enabled and clear the flags, this "Pragma Vector" tells the compiler that when a particular interrupt occurs, run this code. 
-
-## A word of caution...
-While you might be willing to just jump straight in and begin using example code you may find, I would seriously take a few minutes and find a few good videos or tutorials to help understand exactly what is happening in the processor. I implore you to do this since you will inevitably have issues in the future which are solved by not understanding how the processor processes interrupts. A prime example is when I once tried implementing UART and I did not realize that you had to clear a flag or else my code would get stuck in an infinite loop. Hours of my life are now gone thanks to me at the time not understanding how interrupts worked with the peripherals I was utilizing. A few resources I have used in the past include:
-* https://youtu.be/GR8S2XT47eI?t=1334
-* http://processors.wiki.ti.com/index.php/MSP430_LaunchPad_Interrupt_vs_Polling
-* http://www.simplyembedded.org/tutorials/msp430-interrupts/
-
-## Task
-Your goal for this part of the lab is to replicate your button code from Lab 2, where the LED should change states only when the button is pressed. This can be extended to include behaviors such as only have the LED on when the button is depressed, or have the LED blink one color when pressed and another when it is let go. Another behavior extends from the second lab which is speed control based on the button presses. For example, have the rate of the LED cycle between a "low", "Medium", and "High" rate of speed.
-
-## Extra Work 
-### Binary Counter/Shift Register
-Either use a function generator, another processor, or a button to control your microcontroller as an 8-bit binary counter using 8 LEDs to indicate the current status of the counter.
-
-### Multiple Buttons
-Come up with a behavior of your own that incorporates needing to use two buttons or more and these two buttons must be implemented using interrupts.
-
-### (Recommended) Energy Trace
-Using the built in EnergyTrace(R) software in CCS and the corresponding supporting hardware on the MSP430 development platforms, analyze the power consumption between the button based blink code you wrote last week versus this week. What can you do to decrease the amount of power used within the microcontroller in this code? Take a look at the MSP430FR5994 and the built in SuperCap and see how long your previous code and the new code lasts. For a quick intro to EnergyTrace(R), take a look at this video: https://youtu.be/HqeDthLrcsg
+The above code is the interrupt function for the button interrupt.  This code at the down press of the button is triggered.  The code is in a for loop to wait for the button to be released before moving on.  (This is not the most efficient way of doing it, as timer methods can be used.)  After the button is released, the processor waits 1000 cycles and checks the button again to make sure it is still up.  This is incase of any hardware bounces on the button (incase the button bounces back down after it is released).  
