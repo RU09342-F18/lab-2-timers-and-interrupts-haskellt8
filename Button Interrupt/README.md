@@ -22,3 +22,5 @@ __interrupt void PORT_1(void)
 ```
 
 The above code is the interrupt function for the button interrupt.  This code at the down press of the button is triggered.  The code is in a for loop to wait for the button to be released before moving on.  (This is not the most efficient way of doing it, as timer methods can be used.)  After the button is released, the processor waits 1000 cycles and checks the button again to make sure it is still up.  This is incase of any hardware bounces on the button (incase the button bounces back down after it is released).  
+
+This program flashes an LED in a while loop.  When the button is pressed down, the one LED stops flashing, and the other LED fips once.  When the button is released, the first LED continues to flash again.
